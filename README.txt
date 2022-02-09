@@ -1,0 +1,3 @@
+Aplikacja służy do obsługi urządzeń GPS. 
+W celu uruchomienia aplikacji należy pobrać i zainstalować narzędzie Node-Red z linku: https://nodered.org/docs/getting-started/ 
+Aplikacja przesłana została przeze mnie w postaci pliku Json, w którym przechowuje kod narzędzie Node-Red. Po zainstalowaniu narzędzie i uruchomieniu go w cmd/shellu komendą “node-red” w przeglądarce domyślnie pod adresem http://localhost:1880/ pojawi się okno, do programowania które pozwala zaimportować plik Json. Aplikacja wymaga również działającego servera z bazą danych MySQL, domyślna jej nazwa to gps. Aplikacja nasłuchuje na porcie 3000. 

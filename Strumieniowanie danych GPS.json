@@ -1,0 +1,452 @@
+[
+    {
+        "id": "80d99ced85bc4cbc",
+        "type": "tab",
+        "label": "z akceptacja",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "c0573cd18996f71c",
+        "type": "tcp in",
+        "z": "80d99ced85bc4cbc",
+        "name": "",
+        "server": "server",
+        "host": "",
+        "port": "3000",
+        "datamode": "stream",
+        "datatype": "buffer",
+        "newline": "",
+        "topic": "",
+        "base64": false,
+        "x": 120,
+        "y": 40,
+        "wires": [
+            [
+                "ee71f8fd1ddf2c65",
+                "dac7a583bcbcde3d"
+            ]
+        ]
+    },
+    {
+        "id": "3463d1fd8fbc2b81",
+        "type": "tcp out",
+        "z": "80d99ced85bc4cbc",
+        "host": "",
+        "port": "",
+        "beserver": "reply",
+        "base64": false,
+        "end": false,
+        "name": "",
+        "x": 930,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "ee71f8fd1ddf2c65",
+        "type": "function",
+        "z": "80d99ced85bc4cbc",
+        "name": "Rozdziela wiadomości z IMEI od reszty wiadomości",
+        "func": "\n\nif(msg.payload.length<18){\n    msg.i = msg.payload;\n    return [msg,null];\n}else{\n    return [null,msg];\n}",
+        "outputs": 2,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 250,
+        "y": 160,
+        "wires": [
+            [
+                "f72ff4ed3403fe8c",
+                "847a80c759aae98e"
+            ],
+            [
+                "5a359d361e1d14b1",
+                "ea2474d174e61071"
+            ]
+        ]
+    },
+    {
+        "id": "5dd1fb8b77cd7d00",
+        "type": "function",
+        "z": "80d99ced85bc4cbc",
+        "name": "Umieszczenie sformatowanych danych w bazie",
+        "func": "msg.topic = \"INSERT INTO data2  (ID_pomiaru,timestamp, timestamp_server,Priority,Longitude,Latitude,Altitude,Angle,Satellites,Speed,id_imei) VALUES (NULL, FROM_UNIXTIME(\"+msg.Timestamp+\"),current_timestamp(),'\"+msg.Priority+\"','\"+msg.Longitude+\"','\"+msg.Latitude+\"','\"+msg.Altitude+\"','\"+msg.Angle+\"','\"+msg.Satellites+\"','\"+msg.Speed+\"','\"+msg.id_imei+\"');\"\nreturn msg;\n\n//msg.topic = \"INSERT INTO t\"+msg.payload+\"(ID_pomiaru,timestamp, timestamp_server,Priority,Longitude,Latitude,Altitude,Angle,Satellites,Speed,packet) VALUES (NULL, FROM_UNIXTIME(\"+msg.Timestamp+\"),current_timestamp(),'\"+msg.Priority+\"','\"+msg.Longitude+\"','\"+msg.Latitude+\"','\"+msg.Altitude+\"','\"+msg.Angle+\"','\"+msg.Satellites+\"','\"+msg.Speed+\"','\"+msg.pakiet+\"');\"\n",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 540,
+        "y": 540,
+        "wires": [
+            [
+                "5393ed92df7817fd"
+            ]
+        ]
+    },
+    {
+        "id": "5a359d361e1d14b1",
+        "type": "function",
+        "z": "80d99ced85bc4cbc",
+        "name": "Rozkład pakietu na pojedyńcze pomiary",
+        "func": "msg.pakiet = msg.payload.toString(\"hex\"),16;\nvar a = msg.payload.length;\nmsg.packets = new Array(parseInt(msg.payload.slice(9,10).toString(\"hex\"),16));\nvar countPackets = parseInt(msg.payload.slice(9,10).toString(\"hex\"),16);\nfor (var i = 0;i<countPackets;i++){\n    msg.packets[i] = msg.payload.slice(10+(i*(a-15)/countPackets),42+(i*(a-15)/countPackets)).toString(\"hex\");\n}\n\nmsg.packets = msg.packets.reverse();\nreturn msg;\n\n",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 220,
+        "y": 260,
+        "wires": [
+            [
+                "031ab665416e1ada"
+            ]
+        ]
+    },
+    {
+        "id": "94973e7d65484e39",
+        "type": "function",
+        "z": "80d99ced85bc4cbc",
+        "name": "Dzielenie pojedyńczego pomiaru na oddzielne dane",
+        "func": "    msg.Timestamp = msg.packets[msg.i].slice(0, 16);\n    msg.Priority = msg.packets[msg.i].slice(16, 18);\n    msg.Longitude = msg.packets[msg.i].slice(18, 26);\n    msg.Latitude = msg.packets[msg.i].slice(26, 34);\n    msg.Altitude = msg.packets[msg.i].slice(34, 38);\n    msg.Angle = msg.packets[msg.i].slice(38, 42);\n    msg.Satellites = msg.packets[msg.i].slice(42, 44);\n    msg.Speed = msg.packets[msg.i].slice(44, 48);\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 690,
+        "y": 360,
+        "wires": [
+            [
+                "9c9d4a0d87421c76"
+            ]
+        ]
+    },
+    {
+        "id": "bb7208739ed5b005",
+        "type": "delay",
+        "z": "80d99ced85bc4cbc",
+        "name": "",
+        "pauseType": "delay",
+        "timeout": "250",
+        "timeoutUnits": "milliseconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "x": 130,
+        "y": 360,
+        "wires": [
+            [
+                "af35dfcbb6fdf537"
+            ]
+        ]
+    },
+    {
+        "id": "af35dfcbb6fdf537",
+        "type": "function",
+        "z": "80d99ced85bc4cbc",
+        "name": "iteracja po pomiarach",
+        "func": "\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 360,
+        "y": 360,
+        "wires": [
+            [
+                "031ab665416e1ada",
+                "94973e7d65484e39",
+                "c69881ec08e8e0ee"
+            ]
+        ]
+    },
+    {
+        "id": "9c9d4a0d87421c76",
+        "type": "function",
+        "z": "80d99ced85bc4cbc",
+        "name": "Interpretacja oraz formatowanie danych",
+        "func": "msg.Timestamp = parseInt(msg.Timestamp,16)+32400000;\nmsg.Timestamp = msg.Timestamp.toString().substr(0,10)\nmsg.Priority = parseInt(msg.Priority,16);\nmsg.Longitude = parseInt(msg.Longitude,16).toString();\nmsg.Latitude = parseInt(msg.Latitude,16).toString();\nmsg.Longitude = msg.Longitude.slice(0,2)+\".\"+msg.Longitude.slice(2,9);\nmsg.Latitude = msg.Latitude.slice(0,2)+\".\"+msg.Latitude.slice(2,9);\nmsg.Altitude = parseInt(msg.Altitude,16);\nmsg.Angle = parseInt(msg.Angle,16);\nmsg.Satellites = parseInt(msg.Satellites,16);\nmsg.Speed = parseInt(msg.Speed,16);\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 220,
+        "y": 460,
+        "wires": [
+            [
+                "d302dd0c9732a6f1"
+            ]
+        ]
+    },
+    {
+        "id": "847a80c759aae98e",
+        "type": "function",
+        "z": "80d99ced85bc4cbc",
+        "name": "Update portu w bazie na, którym trwa komunikacja z GPS",
+        "func": "msg.imei = msg.payload.slice(2,17);\nif(msg.payload.length === 0) {\n   //msg.topic = \"INSERT INTO imeis(id,IMEI,port) VALUES (NULL,'\"+msg.imei+\"',\"+msg.port+\");\"; //\";\n   //CREATE TABLE t\"+msg.imei+\" (ID_pomiaru int(11) NOT NULL AUTO_INCREMENT primary KEY,timestamp datetime NOT NULL,timestamp_server datetime DEFAULT current_timestamp(),Priority int(3) NOT NULL,Longitude char(10) NOT NULL,Latitude char(10) NOT NULL,Altitude int(5) NOT NULL,Angle int(5) NOT NULL,Satellites int(3) NOT NULL,Speed int(5) NOT NULL,imei VARCHAR(17) ,packet varchar(1024));\";\n}\nelse {\n    msg.topic = \"UPDATE imeis SET port = 0 WHERE port ='\"+msg.port+\"'; UPDATE imeis SET port = \"+msg.port+\" WHERE imei = '\"+msg.imei+\"';\" ;\n}\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 490,
+        "y": 40,
+        "wires": [
+            [
+                "193b9643218e92be"
+            ]
+        ]
+    },
+    {
+        "id": "d302dd0c9732a6f1",
+        "type": "function",
+        "z": "80d99ced85bc4cbc",
+        "name": "Identyfikacja nadawcy wiadomości w bazie",
+        "func": "msg.topic = \"SELECT id FROM imeis WHERE port = \"+msg.port+\";\"; \n//msg.imei = \"SELECT IMEI FROM imeis WHERE port = \"+msg.port+\";\"; \nreturn msg;\n\n//msg.topic = \"SELECT IMEI FROM imeis WHERE port = \"+msg.port+\";\"; \n//msg.topic = \"SELECT IMEI FROM imeis WHERE imei = 3535353535353535;\"; \n",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 590,
+        "y": 460,
+        "wires": [
+            [
+                "14ebc7d34f3e0341"
+            ]
+        ]
+    },
+    {
+        "id": "ac9bb3da7739f3ce",
+        "type": "function",
+        "z": "80d99ced85bc4cbc",
+        "name": "Odebranie informacji z bazy",
+        "func": "msg.id_imei = msg.payload[0].id;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 180,
+        "y": 540,
+        "wires": [
+            [
+                "5dd1fb8b77cd7d00"
+            ]
+        ]
+    },
+    {
+        "id": "5393ed92df7817fd",
+        "type": "mysql",
+        "z": "80d99ced85bc4cbc",
+        "mydb": "12a160cc.aa5a87",
+        "name": "",
+        "x": 930,
+        "y": 540,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "193b9643218e92be",
+        "type": "mysql",
+        "z": "80d99ced85bc4cbc",
+        "mydb": "12a160cc.aa5a87",
+        "name": "",
+        "x": 930,
+        "y": 40,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "14ebc7d34f3e0341",
+        "type": "mysql",
+        "z": "80d99ced85bc4cbc",
+        "mydb": "12a160cc.aa5a87",
+        "name": "",
+        "x": 930,
+        "y": 460,
+        "wires": [
+            [
+                "ac9bb3da7739f3ce"
+            ]
+        ]
+    },
+    {
+        "id": "031ab665416e1ada",
+        "type": "array-loop",
+        "z": "80d99ced85bc4cbc",
+        "name": "",
+        "key": "i",
+        "keyType": "msg",
+        "reset": true,
+        "resetValue": "value-null",
+        "array": "packets",
+        "arrayType": "msg",
+        "x": 590,
+        "y": 280,
+        "wires": [
+            [],
+            [
+                "bb7208739ed5b005"
+            ]
+        ]
+    },
+    {
+        "id": "655d287d6322d881",
+        "type": "mysql",
+        "z": "80d99ced85bc4cbc",
+        "mydb": "12a160cc.aa5a87",
+        "name": "",
+        "x": 930,
+        "y": 100,
+        "wires": [
+            [
+                "765b0f2c6cb9f889"
+            ]
+        ]
+    },
+    {
+        "id": "f72ff4ed3403fe8c",
+        "type": "function",
+        "z": "80d99ced85bc4cbc",
+        "name": "Zapytanie do bazy czy obsłużyć IMEI ",
+        "func": "if(msg.payload.length<18){\nmsg.imei = msg.payload.slice(2,17);\nmsg.topic = \"SELECT EXISTS(SELECT * FROM imeis WHERE imei ='\"+msg.imei+\"') as I;\"; \nreturn msg;}\n\n",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 690,
+        "y": 100,
+        "wires": [
+            [
+                "655d287d6322d881"
+            ]
+        ]
+    },
+    {
+        "id": "765b0f2c6cb9f889",
+        "type": "function",
+        "z": "80d99ced85bc4cbc",
+        "name": "Tworzenie wiadomości zwrotnej (0 lub1)",
+        "func": "var yes = Buffer.alloc(1);\na = msg.payload[0].I;\nif(a==1){\n    \n    yes[0]=0x01;\n    msg.payload=yes;\n    \n}else{\n    \n    yes[0]=0x00;\n    msg.payload=yes;\n    \n}\nreturn msg;\n\n",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 700,
+        "y": 160,
+        "wires": [
+            [
+                "3463d1fd8fbc2b81",
+                "9191e3d3e68c018c"
+            ]
+        ]
+    },
+    {
+        "id": "ea2474d174e61071",
+        "type": "function",
+        "z": "80d99ced85bc4cbc",
+        "name": "Zwracanie długości pakietu",
+        "func": "if(msg.payload.length>18){\n    \n    yes = Buffer.alloc(4)\n    yes[0]=0x00;\n    yes[1]=0x00;\n    yes[2]=0x00;\n    yes[3]= msg.payload[9];\n    msg.payload=yes;}\n    \nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 660,
+        "y": 220,
+        "wires": [
+            [
+                "3463d1fd8fbc2b81",
+                "fcf0d7196db989ce"
+            ]
+        ]
+    },
+    {
+        "id": "dac7a583bcbcde3d",
+        "type": "debug",
+        "z": "80d99ced85bc4cbc",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 260,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "9191e3d3e68c018c",
+        "type": "debug",
+        "z": "80d99ced85bc4cbc",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1150,
+        "y": 100,
+        "wires": []
+    },
+    {
+        "id": "c69881ec08e8e0ee",
+        "type": "debug",
+        "z": "80d99ced85bc4cbc",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1210,
+        "y": 300,
+        "wires": []
+    },
+    {
+        "id": "fcf0d7196db989ce",
+        "type": "debug",
+        "z": "80d99ced85bc4cbc",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1140,
+        "y": 200,
+        "wires": []
+    },
+    {
+        "id": "12a160cc.aa5a87",
+        "type": "MySQLdatabase",
+        "name": "",
+        "host": "127.0.0.1",
+        "port": "3306",
+        "db": "gps",
+        "tz": "",
+        "charset": ""
+    }
+]
